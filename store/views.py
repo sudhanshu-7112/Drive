@@ -1,12 +1,13 @@
 import json
-from pydoc import locate
 import random
+from re import X
+from unicodedata import name
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
-from store.models import document, loc
+from store.models import document, loc, folders
 from django.db.models import Q
 
 # Create your views here.
@@ -78,13 +79,16 @@ def upload(request):
     if(request.method=="POST"):
         if(request.user.is_authenticated):
             body=request.FILES
+            p=request.POST
             print(body.keys())
             f=body['file']
             print(f)
             doc=document(file=f)
             doc.save()
-            # u=User.objects.get(id=request.user)
-            # loc.objects.create(user=u, file=doc)
+            u=User.objects.get(id=request.user.id)
+            x=folders.objects.get(user=u, id=p['id'])
+            x=x.name
+            loc.objects.create(user=u, file=doc, folder=x)
             msg={'msg':'success'}
             return JsonResponse(msg, status=200, safe=False)
         else:
@@ -92,22 +96,63 @@ def upload(request):
             return JsonResponse(msg, safe=False, status=401)
 
 
-def files(request):
-    if(request.user.is_authenticated):
-        doc=loc.objects.filter(user=request.user)
-        d=[]
-        for i in doc.file:
-            x=document.objects.get(id=i)
-            s={'file':x.file}
-            d.append(s)
-        return JsonResponse(d, status=200, safe=False)
+# def files(request):
+#     if(request.user.is_authenticated):
+#         doc=loc.objects.filter(user=request.user.id)
+#         d=[]
+#         for i in doc:
+#             x=document.objects.get(id=i.user)
+#             s={'file':x.file}
+#             d.append(s)
+#         return JsonResponse(d, status=200, safe=False)
 
 
 def details(request):
     if(request.user.is_authenticated):
-        user=User.objects.get(id=request.user)
-        user=model_to_dict(user)
-        return JsonResponse(user, status=200, safe=False)
+        print(request.user)
+        x={'fname':request.user.first_name,'lname':request.user.last_name,'user':request.user.username,'mail':request.user.email}
+        return JsonResponse(x, status=200, safe=False)
+    else:
+        msg={'msg':'Unauthorized'}
+        return JsonResponse(msg, safe=False, status=401)
+
+
+def fold(request):
+    if(request.user.is_authenticated):
+        x=list(folders.objects.distinct().values())
+        print(x)
+        return JsonResponse(x, safe=False, status=200)
+    else:
+        msg={'msg':'Unauthorized'}
+        return JsonResponse(msg, safe=False, status=401)
+
+
+def addfolder(request):
+    if(request.user.is_authenticated):
+        body=json.loads(request.body)
+        u=User.objects.get(id=request.user.id)
+        folders.objects.create(user=u, name=body['name'])
+        msg={'msg':'Success'}
+        return JsonResponse(msg, status=200, safe=False)
+    else:
+        msg={'msg':'Unauthorized'}
+        return JsonResponse(msg, safe=False, status=401)
+
+
+def files(request):
+    if(request.user.is_authenticated and request.method=="POST"):
+        body=json.loads(request.body)
+        f=folders.objects.get(id=body['id'])
+        l=loc.objects.filter(folder=f.name)
+        d=[]
+        for i in l:
+            x=document.objects.get(id=i.id)
+            s={'link':x.file}
+            d.append(s)
+        return JsonResponse(d, safe=False, status=200)
+    else:
+        msg={'msg':'Unauthorized'}
+        return JsonResponse(msg, safe=False, status=401)
 
 
 def out(request):

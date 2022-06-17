@@ -8,5 +8,9 @@ class document(models.Model):
 class loc(models.Model):
     user=models.ForeignKey(User, on_delete=models.CASCADE)
     folder=models.CharField(max_length=15, default='new folder')
-    type=models.CharField(max_length=10, default='type')
     file=models.ForeignKey(document, on_delete=models.CASCADE)
+
+class folders(models.Model):
+    name=models.CharField(max_length=20)
+    user=models.ForeignKey(User, on_delete=models.CASCADE)
+

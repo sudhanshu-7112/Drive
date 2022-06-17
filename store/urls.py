@@ -7,5 +7,9 @@ urlpatterns = [
     path('register', views.register),
     path('login',views.log_in),
     path('logout',views.out),
-    path('getfiles',views.files)
+    path('getfiles',views.files),
+    path('dashboard',views.details),
+    path('files',views.files),
+    path('folder',views.fold),
+    path('addfolder',views.addfolder)
 ]
