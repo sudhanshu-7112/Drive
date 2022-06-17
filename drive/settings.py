@@ -27,6 +27,38 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+SESSION_COOKIE_SAMESITE = None
+
+SESSION_COOKIE_SECURE = True
+
+SESSION_COOKIE_HTTPONLY = False
+
+#CORS_ORIGIN_ALLOW_ALL=False
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:5501',
+    'http://127.0.0.1:5501',
+    'http://10.21.84.124:5501',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+    'http://localhost:3000'
+)
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'Access-Control-Allow-Origin',
+]
+
 
 # Application definition
 
@@ -124,17 +156,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-CORS_ORIGIN_ALLOW_ALL=False
-
-CORS_ALLOW_CREDENTIALS = True
-
-CORS_ORIGIN_WHITELIST = (
-    'http://localhost:5501',
-    'http://127.0.0.1:5501',
-    'http://127.0.0.1:5500',
-    'http://10.21.84.75:5500'
-)
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
@@ -153,6 +174,6 @@ EMAIL_PORT = 587
 
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = 'sudhanshu.2125it1056@kiet.edu'
+EMAIL_HOST_USER = 'cloudbox295@gmail.com'
 
-EMAIL_HOST_PASSWORD = 'sudhan'
+EMAIL_HOST_PASSWORD = 'fyfktluuskfesutl'
