@@ -1,13 +1,10 @@
 import json
 import random
-from re import X
-from unicodedata import name
-from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
-from store.models import document, loc, folders
+from store.models import document, folders, size
 from django.db.models import Q
 
 # Create your views here.
@@ -20,7 +17,7 @@ def register(request):
             msg={'msg':'Username already exist'}
             return JsonResponse(msg, status=401, safe=False)
         global otp
-        otp=random.randint(1000,10000)
+        otp[body['mail']]=random.randint(1000,10000)
         send_mail(
                 'OTP for registeration',
                 '''Hello {name}.
@@ -37,7 +34,8 @@ def register(request):
 def otpverify(request):
     if(request.method=="POST"):
         body=json.loads(request.body)
-        if(body['otp']==otp):
+        if(body['otp']==otp[body['mail']]):
+            otp.pop(body['otp'])
             user=User.objects.create_user(body['user'], body['mail'], body['pass1'])
             user.first_name=body['fname']
             user.last_name=body['lname']
@@ -80,15 +78,23 @@ def upload(request):
         if(request.user.is_authenticated):
             body=request.FILES
             p=request.POST
+            print(p)
             print(body.keys())
             f=body['file']
             print(f)
-            doc=document(file=f)
-            doc.save()
             u=User.objects.get(id=request.user.id)
-            x=folders.objects.get(user=u, id=p['id'])
-            x=x.name
-            loc.objects.create(user=u, file=doc, folder=x)
+            x=folders.objects.get(id=p['id'])
+            print(body['file'].size)
+            doc=document(file=f, user=u, folder=x, byte=body['file'].size)
+            doc.save()
+            s=document.objects.filter(folder=x, user=u)
+            space=0
+            for i in s:
+                space=space+i.byte
+            space=space/(1024*1024)
+            y=folders.objects.get(folder_name=x, user=u)
+            y.size=space
+            y.save()
             msg={'msg':'success'}
             return JsonResponse(msg, status=200, safe=False)
         else:
@@ -119,7 +125,8 @@ def details(request):
 
 def fold(request):
     if(request.user.is_authenticated):
-        x=list(folders.objects.distinct().values())
+        u=User.objects.get(id=request.user.id)
+        x=list(folders.objects.filter(user=u).distinct().values())
         print(x)
         return JsonResponse(x, safe=False, status=200)
     else:
@@ -131,7 +138,7 @@ def addfolder(request):
     if(request.user.is_authenticated):
         body=json.loads(request.body)
         u=User.objects.get(id=request.user.id)
-        folders.objects.create(user=u, name=body['name'])
+        f=folders.objects.create(user=u, name=body['name'])
         msg={'msg':'Success'}
         return JsonResponse(msg, status=200, safe=False)
     else:
@@ -142,17 +149,34 @@ def addfolder(request):
 def files(request):
     if(request.user.is_authenticated and request.method=="POST"):
         body=json.loads(request.body)
+        u=User.objects.get(id=request.user.id)
         f=folders.objects.get(id=body['id'])
-        l=loc.objects.filter(folder=f.name)
-        d=[]
-        for i in l:
-            x=document.objects.get(id=i.id)
-            s={'link':x.file}
-            d.append(s)
-        return JsonResponse(d, safe=False, status=200)
+        l=list(document.objects.filter(folder=f, user=u).values())
+        return JsonResponse(l, safe=False, status=200)
     else:
         msg={'msg':'Unauthorized'}
         return JsonResponse(msg, safe=False, status=401)
+
+
+def setsize(request):
+    if(request.user.is_authenticated and request.user.is_superuser and request.method=="POST"):
+        body=json.loads(request.body)
+        size.objects.create(type=body['type'], size=body['size'])
+        msg={'msg':'Success'}
+        return JsonResponse(msg, safe=False, status=200)
+
+
+def recent_file(request):
+    if(request.user.is_authenticated):
+        u=User.objects.get(id=request.user.id)
+        doc=list(document.objects.filter(user=u).order_by('recent').values())
+        return JsonResponse(doc, status=200, safe=False)
+
+
+# def fold_size(request):
+#     if(request.user.is_authenticated):
+#         x=list(foldsize.objects.all().values())
+#         return JsonResponse(x, safe=False, status=200)
 
 
 def out(request):

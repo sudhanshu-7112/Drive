@@ -11,5 +11,6 @@ urlpatterns = [
     path('dashboard',views.details),
     path('files',views.files),
     path('folder',views.fold),
-    path('addfolder',views.addfolder)
+    path('addfolder',views.addfolder),
+    path('recent',views.recent_file)
 ]
