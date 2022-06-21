@@ -18,5 +18,6 @@ urlpatterns = [
     path('del',views.trash),
     path('updatepic',views.profile),
     path('allfile',views.all_file),
-    path('setsize',views.setsize)
+    path('setsize',views.setsize),
+    path('typesize',views.typesize)
 ]

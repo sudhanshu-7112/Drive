@@ -118,7 +118,7 @@ def details(request):
     if(request.user.is_authenticated):
         print(request.user)
         print(type(request))
-        u=User.objects.get(request.user.id)
+        u=User.objects.get(id=request.user.id)
         pic=ProfilePic.objects.filter(user=u)
         if(not pic.exists()):
             p="No pic"
@@ -174,8 +174,7 @@ def setsize(request):
             return JsonResponse(msg, status=400, safe=False)
         s=size.objects.filter(type=body['type'])
         if(s.exists()):
-            s.size=body['size']
-            s.save()
+            s.update(size=body['size'])
             msg={'msg':'Success'}
             return JsonResponse(msg, safe=False, status=200)
         size.objects.create(type=body['type'], size=body['size'])
@@ -278,5 +277,11 @@ def all_file(request):
         doc=list(document.objects.filter(delete=0).order_by('recent').values())
         return JsonResponse(doc, status=200, safe=False)
 
+
+def typesize(request):
+    if(request.user.is_authenticated):
+        u=User.objects.get(id=request.user.id)
+        s=list(size.objects.all().values('type','size'))
+        return JsonResponse(s, status=200, safe=False)
 
 
