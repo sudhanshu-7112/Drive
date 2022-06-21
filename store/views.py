@@ -4,8 +4,13 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
-from store.models import document, folders, size
+from drive import settings
+from drive.settings import BASE_DIR
+from store.models import ProfilePic, document, folders, size
 from django.db.models import Q
+import mimetypes
+import os
+from django.http.response import HttpResponse
 
 # Create your views here.
 
@@ -81,20 +86,27 @@ def upload(request):
             print(p)
             print(body.keys())
             f=body['file']
-            print(f)
+            z=str(f)
+            print(type(z))
             u=User.objects.get(id=request.user.id)
             x=folders.objects.get(id=p['id'])
             print(body['file'].size)
-            doc=document(file=f, user=u, folder=x, byte=body['file'].size)
+            if(z[-3:]=='jpg' or z[-4:]=='jpeg' or z[-3:]=='png' or z[-3:]=='svg'):
+                a='images'
+            elif(z[-3:]=='mp4'):
+                a='videoes'
+            else:
+                a='files'
+            doc=document(file=f, user=u, folder=x, byte=body['file'].size, type=a)
             doc.save()
-            s=document.objects.filter(folder=x, user=u)
+            s=document.objects.filter(folder=x, user=u, delete=0)
             space=0
             for i in s:
                 space=space+i.byte
+            print(space)
             space=space/(1024*1024)
-            y=folders.objects.get(folder_name=x, user=u)
-            y.size=space
-            y.save()
+            x.s=space
+            x.save()
             msg={'msg':'success'}
             return JsonResponse(msg, status=200, safe=False)
         else:
@@ -102,21 +114,17 @@ def upload(request):
             return JsonResponse(msg, safe=False, status=401)
 
 
-# def files(request):
-#     if(request.user.is_authenticated):
-#         doc=loc.objects.filter(user=request.user.id)
-#         d=[]
-#         for i in doc:
-#             x=document.objects.get(id=i.user)
-#             s={'file':x.file}
-#             d.append(s)
-#         return JsonResponse(d, status=200, safe=False)
-
-
 def details(request):
     if(request.user.is_authenticated):
         print(request.user)
-        x={'fname':request.user.first_name,'lname':request.user.last_name,'user':request.user.username,'mail':request.user.email}
+        print(type(request))
+        u=User.objects.get(request.user.id)
+        pic=ProfilePic.objects.filter(user=u)
+        if(not pic.exists()):
+            p="No pic"
+        else:
+            p=pic[0].pic
+        x={'fname':request.user.first_name,'lname':request.user.last_name,'user':request.user.username,'mail':request.user.email, 'pic':p}
         return JsonResponse(x, status=200, safe=False)
     else:
         msg={'msg':'Unauthorized'}
@@ -151,7 +159,7 @@ def files(request):
         body=json.loads(request.body)
         u=User.objects.get(id=request.user.id)
         f=folders.objects.get(id=body['id'])
-        l=list(document.objects.filter(folder=f, user=u).values())
+        l=list(document.objects.filter(folder=f, user=u, delete=0).values())
         return JsonResponse(l, safe=False, status=200)
     else:
         msg={'msg':'Unauthorized'}
@@ -161,6 +169,15 @@ def files(request):
 def setsize(request):
     if(request.user.is_authenticated and request.user.is_superuser and request.method=="POST"):
         body=json.loads(request.body)
+        if(body['type']=="" or body['size']==None):
+            msg={'msg':'invalid'}
+            return JsonResponse(msg, status=400, safe=False)
+        s=size.objects.filter(type=body['type'])
+        if(s.exists()):
+            s.size=body['size']
+            s.save()
+            msg={'msg':'Success'}
+            return JsonResponse(msg, safe=False, status=200)
         size.objects.create(type=body['type'], size=body['size'])
         msg={'msg':'Success'}
         return JsonResponse(msg, safe=False, status=200)
@@ -169,17 +186,97 @@ def setsize(request):
 def recent_file(request):
     if(request.user.is_authenticated):
         u=User.objects.get(id=request.user.id)
-        doc=list(document.objects.filter(user=u).order_by('recent').values())
+        doc=list(document.objects.filter(user=u, delete=0).order_by('recent').values())
         return JsonResponse(doc, status=200, safe=False)
 
 
-# def fold_size(request):
-#     if(request.user.is_authenticated):
-#         x=list(foldsize.objects.all().values())
-#         return JsonResponse(x, safe=False, status=200)
-
-
+def log_admin(request):
+    if(request.method=="POST"):
+        if(request.user.is_authenticated and request.user.i_superuser):
+            body=json.loads(request.body)
+            user=authenticate(username=body['user'],password=body['pass1'])
+            if(user is not None):
+                login(request, user)
+                msg={'msg':'Success'}
+                return JsonResponse(msg, status=200, safe=False)
+            else:
+                msg={'msg':'Wrong credentials'}
+                return JsonResponse(msg, status=401, safe=False)
+                
+                
 def out(request):
     logout(request)
     msg={'msg':'Logout successfull'}
     return JsonResponse(msg, status=200, safe=False)
+
+
+def download_file(request):
+    if(request.user.is_authenticated and request.method=="POST"):
+        body=json.loads(request.body)
+        i=body['id']
+        path=document.objects.get(id=i)
+        path=path.file
+        path=str(path)
+        file_path = os.path.join(settings.MEDIA_ROOT, path)
+        mime_type, _ = mimetypes.guess_type(file_path)
+        print(mime_type)
+        if os.path.exists(file_path):
+            with open(file_path, 'rb') as fh:
+                response = HttpResponse(fh.read(), content_type=mime_type)
+                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(file_path)
+                return response
+        return HttpResponse('lol')  
+    else:
+        return HttpResponse('lol')
+
+
+def trash(request):
+    if(request.method=="POST"):
+        if(request.user.is_authenticated):
+            body=json.loads(request.body)
+            doc=document.objects.get(id=body['id'])
+            doc.delete=1
+            doc.save()
+            msg={'msg':'Success'}
+            return JsonResponse(msg, status=200, safe=False)
+
+
+def trash_files(request):
+    if(request.user.is_authenticated):
+        u=User.objects.get(id=request.user.id)
+        doc=list(document.objects.filter(user=u, delete=1).values())
+        return JsonResponse(doc, status=200, safe=False)
+
+
+def path_file():
+    def wrapper(user, filename):
+        file_upload_dir = os.path.join(settings.MEDIA_ROOT, 'file_upload')
+        if os.path.exists(file_upload_dir):
+            import shutil
+            shutil.rmtree(file_upload_dir)
+        return os.path.join(file_upload_dir, filename)
+    return wrapper
+
+
+def profile(request):
+    if(request.method=="POST"):
+        if(request.user.is_authenticated):
+            body=request.FILES
+            u=User.objects.get(id=request.user.id)
+            x=ProfilePic.objects.filter(user=u)
+            if(x.exists()):
+                x.pic=body['file']
+                x.save()
+            else:
+                ProfilePic.objects.create(user=u, pic=body['file'])
+            msg={'msg':'Success'}
+            return JsonResponse(msg, status=200, safe=False)
+
+
+def all_file(request):
+    if(request.user.is_authenticated and request.user.is_superuser):
+        doc=list(document.objects.filter(delete=0).order_by('recent').values())
+        return JsonResponse(doc, status=200, safe=False)
+
+
+

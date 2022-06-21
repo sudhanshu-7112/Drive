@@ -12,5 +12,11 @@ urlpatterns = [
     path('files',views.files),
     path('folder',views.fold),
     path('addfolder',views.addfolder),
-    path('recent',views.recent_file)
+    path('recent',views.recent_file),
+    path('download',views.download_file),
+    path('trashfiles',views.trash_files),
+    path('del',views.trash),
+    path('updatepic',views.profile),
+    path('allfile',views.all_file),
+    path('setsize',views.setsize)
 ]
