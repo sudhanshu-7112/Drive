@@ -44,7 +44,7 @@ CORS_ORIGIN_WHITELIST = (
     'http://127.0.0.1:5500',
     'http://localhost:5500',
     'http://10.21.86.44:5501',
-    'http://10.21.84.202:5501',
+    'http://10.21.84.135:5501',
     'http://localhost:3000'
 )
 
@@ -61,6 +61,7 @@ CORS_ALLOW_HEADERS = [
     'Access-Control-Allow-Origin',
 ]
 
+X_FRAME_OPTIONS = 'ALLOWALL'
 
 # Application definition
 
@@ -167,6 +168,7 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
+
 
 MAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 

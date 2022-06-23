@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 class folders(models.Model):
     name=models.CharField(max_length=20)
     user=models.ForeignKey(User, on_delete=models.CASCADE)
-    s=models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    s=models.IntegerField(default=0)
 
 class document(models.Model):
     file=models.FileField(upload_to='images')
@@ -16,6 +16,7 @@ class document(models.Model):
     byte=models.BigIntegerField()
     type=models.CharField(max_length=7, default='file')
     delete=models.IntegerField(default=0)
+    permanentdel=models.IntegerField(default=0)
 
 class size(models.Model):
     type=models.CharField(max_length=15)

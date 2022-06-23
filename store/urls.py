@@ -6,6 +6,7 @@ urlpatterns = [
     path('otpverify',views.otpverify),
     path('register', views.register),
     path('login',views.log_in),
+    path('admin',views.log_admin),
     path('logout',views.out),
     path('getfiles',views.files),
     path('dashboard',views.details),
@@ -19,5 +20,7 @@ urlpatterns = [
     path('updatepic',views.profile),
     path('allfile',views.all_file),
     path('setsize',views.setsize),
-    path('typesize',views.typesize)
+    path('typesize',views.typesize),
+    path('restore',views.restore),
+    path('permanentdelete',views.permanent_delete)
 ]
