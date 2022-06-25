@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+from email.headerregistry import ContentDispositionHeader, ContentTypeHeader
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -33,6 +34,7 @@ SESSION_COOKIE_SECURE = True
 
 SESSION_COOKIE_HTTPONLY = False
 
+CORS_EXPOSE_HEADERS = ["Content-Disposition", "Content-Type"]
 #CORS_ORIGIN_ALLOW_ALL=False
 
 CORS_ALLOW_CREDENTIALS = True

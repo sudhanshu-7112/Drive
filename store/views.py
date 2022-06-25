@@ -1,6 +1,6 @@
 import json
 import random
-from django.http import JsonResponse
+from django.http import FileResponse, JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
@@ -8,7 +8,6 @@ from drive import settings
 from drive.settings import BASE_DIR
 from store.models import ProfilePic, document, folders, size
 from django.db.models import Q
-import mimetypes
 import os
 from django.http.response import HttpResponse
 
@@ -217,14 +216,9 @@ def download_file(request):
         path=path.file
         path=str(path)
         file_path = os.path.join(settings.MEDIA_ROOT, path)
-        mime_type, _ = mimetypes.guess_type(file_path)
-        print(mime_type)
-        if os.path.exists(file_path):
-            with open(file_path, 'rb') as fh:
-                response = HttpResponse(fh.read(), content_type=mime_type)
-                response['Content-Disposition'] = 'attachement; filename=' + os.path.basename(file_path)
-                return response
-        return HttpResponse('lol')  
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=path)
+        print(response.filename)
+        return response 
     else:
         return HttpResponse('lol')
 
