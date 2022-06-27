@@ -16,7 +16,6 @@ class document(models.Model):
     byte=models.BigIntegerField()
     type=models.CharField(max_length=7, default='file')
     delete=models.IntegerField(default=0)
-    permanentdel=models.IntegerField(default=0)
 
 class size(models.Model):
     type=models.CharField(max_length=15)
